@@ -1,0 +1,67 @@
+services:
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: fleet-api
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      JWT_SECRET: super-secret-dev-key
+      JWT_EXPIRES_IN: 12h
+      CORS_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgres://postgres:admin@db:5432/fleet_db
+      REDIS_URL: redis://redis:6379
+      SIMULATION_INTERVAL_MS: 2000
+      NODE_ENV: development
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: fleet-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: fleet_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fleet_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: fleet-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: fleet-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_BASE_URL: http://localhost:4000
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  pg_data:

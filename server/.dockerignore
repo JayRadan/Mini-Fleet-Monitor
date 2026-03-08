@@ -1,0 +1,5 @@
+# STEP 1: Keep image small by excluding local artifacts.
+node_modules
+npm-debug.log
+.git
+.gitignore
