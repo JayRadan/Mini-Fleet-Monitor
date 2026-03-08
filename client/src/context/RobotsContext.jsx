@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { getRobots } from "../services/apiClient";
 import { createRobotSocket } from "../services/wsClient";
@@ -80,12 +80,4 @@ function RobotsProvider({ children }) {
     );
 }
 
-function useRobots() {
-    const context = useContext(RobotsContext);
-    if (!context) {
-        throw new Error("useRobots must be used inside RobotsProvider");
-    }
-    return context;
-}
-
-export { RobotsContext, RobotsProvider, useRobots };
+export { RobotsContext, RobotsProvider };

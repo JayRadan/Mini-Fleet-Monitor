@@ -12,14 +12,17 @@ import Point from "ol/geom/Point";
 import { fromLonLat } from "ol/proj";
 import { Style, Circle as CircleStyle, Fill, Stroke, Text } from "ol/style";
 import { defaults as defaultControls } from "ol/control";
-import { useRobots } from "../../hooks/useRobots";  
+import { useRobots } from "../../hooks/useRobots";
 function RobotMap() {
- const { robots,selectedRobot , isLoading } = useRobots();
+  const { robots, selectedRobot, isLoading } = useRobots();
+  const selectedRobotId = selectedRobot?.id;
+  const selectedRobotLon = selectedRobot?.lon;
+  const selectedRobotLat = selectedRobot?.lat;
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const robotLayerRef = useRef(null);
   const hasAutoFittedRef = useRef(false);
-console.log(selectedRobot)
+
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
 
@@ -120,29 +123,28 @@ console.log(selectedRobot)
     hasAutoFittedRef.current = true;
   }, [robots]);
 
-    useEffect(() => {
+  useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !selectedRobot) return;
+    if (!map || selectedRobotId == null) return;
 
     if (
-        typeof selectedRobot.lon !== "number" ||
-        typeof selectedRobot.lat !== "number"
+      typeof selectedRobotLon !== "number" ||
+      typeof selectedRobotLat !== "number"
     ) {
-        return;
+      return;
     }
 
     const view = map.getView();
-    const targetCenter = fromLonLat([selectedRobot.lon, selectedRobot.lat]);
+    const targetCenter = fromLonLat([selectedRobotLon, selectedRobotLat]);
     const currentZoom = view.getZoom() ?? 10;
     const zoomOutLevel = Math.min(currentZoom, 8);
 
     view.animate(
-        { zoom: zoomOutLevel, duration: 400 },
-        { center: targetCenter, duration: 400 },
-        { zoom: 14, duration: 1000 }
+      { zoom: zoomOutLevel, duration: 400 },
+      { center: targetCenter, duration: 400 },
+      { zoom: 14, duration: 1000 }
     );
-    }, [selectedRobot?.id, selectedRobot?.lon, selectedRobot?.lat]);
-
+  }, [selectedRobotId, selectedRobotLon, selectedRobotLat]);
 
   function recenterToRobots() {
     const map = mapInstanceRef.current;
@@ -173,12 +175,24 @@ console.log(selectedRobot)
   }
 
   return (
-    <section className="panel map-panel">
-      <div className="panel-header">
-        <h2>Map</h2>
-        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-          {isLoading ? <span>Loading...</span> : <span>{robots.length} robots</span>}
-          <button type="button" onClick={recenterToRobots}>
+    <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-slate-950/30 backdrop-blur sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-white">Live Map</h2>
+        <div className="flex items-center gap-3 text-xs text-slate-300 sm:text-sm">
+          {isLoading ? (
+            <span className="rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1">
+              Loading...
+            </span>
+          ) : (
+            <span className="rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1">
+              {robots.length} robots
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={recenterToRobots}
+            className="rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 font-medium text-cyan-200 transition hover:bg-cyan-500/20"
+          >
             Recenter
           </button>
         </div>
@@ -186,8 +200,7 @@ console.log(selectedRobot)
 
       <div
         ref={mapRef}
-        className="map-canvas"
-        style={{ width: "100%", height: "400px" }}
+        className="h-[340px] w-full rounded-xl border border-slate-700 sm:h-[420px]"
       />
     </section>
   );
